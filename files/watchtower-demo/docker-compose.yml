@@ -1,0 +1,36 @@
+services:
+  registry:
+    image: registry:2
+    container_name: demo-registry
+    ports:
+      - "5000:5000"
+    volumes:
+      - registry-data:/var/lib/registry
+    restart: unless-stopped
+
+  app:
+    image: localhost:5000/myapp:latest
+    container_name: demo-app
+    ports:
+      - "8090:80"
+    labels:
+      - "com.centurylinklabs.watchtower.enable=true"
+    depends_on:
+      - registry
+    restart: unless-stopped
+
+  watchtower:
+    image: nickfedor/watchtower:latest
+    container_name: watchtower
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    environment:
+      - WATCHTOWER_POLL_INTERVAL=30
+      - WATCHTOWER_LABEL_ENABLE=true
+      - WATCHTOWER_CLEANUP=true
+      - WATCHTOWER_INCLUDE_RESTARTING=true
+      - WATCHTOWER_NO_STARTUP_MESSAGE=false
+    restart: unless-stopped
+
+volumes:
+  registry-data:
